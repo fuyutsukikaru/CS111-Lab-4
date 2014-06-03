@@ -13,23 +13,33 @@
 # information you'd like us to know, please add it at the end of the file.
 
 # Partner 1
-Name: 
-Student ID: 
-Email: 
+Name: Soomin Jeong
+Student ID: 304116854
+Email: sjeongus@ucla.edu
 
 # Partner 2 (if you're working in a team)
-Name: 
+Name: James Wu
 Student ID: 
-Email: 
+Email: wuzhonglin@ucla.edu
 
 # EXERCISE 1: What method you used to make your peer download and upload
 #    files in parallel?  (~1-3 sentences)
+We used fork() in order to create child processes that would run the download and
+the upload in parallel. It had a child count that kept running waitpid until the count
+reached 0.
 
 # EXERCISE 2A: What conditions did you find and fix that would have
 #    triggered a buffer overrun bug?  (~1-3 sentences each)
+Rather than using strcpy in start_download and task_download, we used strncpy to copy
+exactly the FILENAMESIZ so that we could prevent a malicious download from causing
+a buffer overflow.
 
 # EXERCISE 2B: What other robustness problems did you fix?  (~1-3 sentences
 #    each)
+We checked to make sure that the directory that we were downloading from did not contain
+a '/' so that it would not download to an invalid directory.
+We also made sure that the size of the file buffer was not larger than the FILENAMESIZ
+to ensure that our buffers would not overflow.
 
 # EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
 #    are they attacks?  (~3-10 sentences each)
