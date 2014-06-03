@@ -19,7 +19,7 @@ Email: sjeongus@ucla.edu
 
 # Partner 2 (if you're working in a team)
 Name: James Wu
-Student ID: 
+Student ID: 204135990
 Email: wuzhonglin@ucla.edu
 
 # EXERCISE 1: What method you used to make your peer download and upload
@@ -43,6 +43,14 @@ to ensure that our buffers would not overflow.
 
 # EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
 #    are they attacks?  (~3-10 sentences each)
+We implemented two attacks for the evil mode. The first is run in
+task_download: it runs a DOS attack (not quite DDOS since it only connects
+to one thing at a time. It tries to connect to one peer until it can't
+do it anymore, so that's neat. Then it moves to the next. The second attack
+is in task_upload. It will copy garbage data from /dev/urandom into the
+filename before opening the file, ensuring the file will probably not be
+openable (unless the user got very, very lucky). These are evil attacks
+because they are not what the user would expect to happen!
 
 # Extra credit problems
 #Extra credit problem: none
