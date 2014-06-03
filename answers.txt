@@ -53,6 +53,7 @@ openable (unless the user got very, very lucky). These are evil attacks
 because they are not what the user would expect to happen!
 
 # Extra credit problems
-#Extra credit problem: none
+#Extra credit problem: 
+Implemented an MD5 checksum check to test for the validity of the downloaded files.
 
 # Add any other information you'd like us to know below this line.
