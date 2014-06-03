@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -771,7 +772,7 @@ int main(int argc, char *argv[])
 	// Parallelizing download and upload
 	int childCount = 0;
 	// First, download files named on command line.
-	for (; argc > 1; argc--; argv++) {
+	for (; argc > 1; argc--, argv++) {
 		if ((t = start_download(tracker_task, argv[1]))) {
 			pid_t pid;
 			if ((pid = fork()) < 0) {
