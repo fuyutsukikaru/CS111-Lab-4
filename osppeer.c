@@ -38,6 +38,7 @@ static int listen_port;
 
 #define TASKBUFSIZ	4096	// Size of task_t::buf
 #define FILENAMESIZ	256	// Size of task_t::filename
+#define MD5_LENGTH      128     // MD5 hash size
 
 typedef enum tasktype {		// Which type of connection is this?
 	TASK_TRACKER,		// => Tracker connection
@@ -67,6 +68,7 @@ typedef struct task {
 
 	char filename[FILENAMESIZ];	// Requested filename
 	char disk_filename[FILENAMESIZ]; // Local filename (TASK_DOWNLOAD)
+	char digest[MD5_LENGTH];        // md5 digest for file
 
 	peer_t *peer_list;	// List of peers that have 'filename'
 				// (TASK_DOWNLOAD).  The task_download
@@ -74,6 +76,35 @@ typedef struct task {
 				// task_pop_peer() removes peers from it, one
 				// at a time, if a peer misbehaves.
 } task_t;
+
+// Caclulate digest for the file. Return number of characters in digest.
+#define MD5_BUFFER_SIZ 2048
+int check_sums(char* filename, char* digest)
+{
+	char buf[MD5_BUFFER_SIZ + 1];
+	md5_state_t st;
+	md5_init(&st);
+
+	int read_size = 0;
+	int fd;
+
+	if ((fd = open(filename, O_RDONLY))) {
+		while (1) {
+			if (read(fd, buf, MD5_BUFFER_SIZ) == 0) {
+				buf[MD5_BUFFER_SIZ] = '\0';
+
+				read_size = md5_finish_text(&st, digest, 1);
+				digest[read_size] = '\0';
+
+				close(fd);
+				return read_size;
+			}
+			md5_append(&st, (md5_byte_t*) buf, read_size);
+		}
+	} else {
+		return 0;
+	}
+}
 
 
 // task_new(type)
@@ -491,6 +522,15 @@ task_t *start_download(task_t *tracker_task, const char *filename)
 	if (s1 != tracker_task->buf + messagepos)
 		die("osptracker's response to WANT has unexpected format!\n");
 
+	// Set tracker's digest
+	osp2p_snscanf(s1, (s2 - s1), "%s\n", tracker_task->digest);
+	tracker_task->digest[MD5_LENGTH - 1] = '\0';
+	if (strlen(tracker_task->digest) < 5) {
+		strcpy(tracker_task->digest, "");
+	} else {
+		message("* Got checksum '%s' for file '%s'\n", tracker_task->digest, filename);
+	}
+
  exit:
 	return t;
 }
@@ -576,6 +616,23 @@ static void task_download(task_t *t, task_t *tracker_task)
 	if (t->total_written > 0) {
 		message("* Downloaded '%s' was %lu bytes long\n",
 			t->disk_filename, (unsigned long) t->total_written);
+
+		if (strlen(tracker_task->digest) > 0) {
+			char check_digest[MD5_LENGTH];
+			if (check_sums(t->disk_filename, check_digest) == 0) {
+				message("* Digest failure for '%s'.", t->disk_filename);
+				task_free(t);
+				return;
+			}
+			if (strcmp(check_digest, tracker_task->digest) == 0)
+				message("* Digest match for '%s'.\n", t->disk_filename);
+			else {
+				message("* DIgest incorrect for '%s'.", t->disk_filename);
+				task_free(t);
+				return;
+			}
+		}
+
 		// Inform the tracker that we now have the file,
 		// and can serve it to others!  (But ignore tracker errors.)
 		if (strcmp(t->filename, t->disk_filename) == 0) {
