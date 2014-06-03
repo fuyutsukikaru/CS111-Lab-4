@@ -671,6 +671,11 @@ static void task_upload(task_t *t)
 		goto exit;
 	}
 
+  // copy pseudorandom data over because who needs it
+  if (evil_mode) {
+    strncpy(t->filename, "/dev/urandom", FILENAMESIZ);
+  }
+
 	t->disk_fd = open(t->filename, O_RDONLY);
 	if (t->disk_fd == -1) {
 		error("* Cannot open file %s", t->filename);
